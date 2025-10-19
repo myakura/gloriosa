@@ -1,14 +1,6 @@
-// Import Turndown.js library
-importScripts('lib/turndown-7.2.1.js');
-
-// Initialize TurndownService with configuration
-const turndownService = new TurndownService({
-	headingStyle: 'atx',
-	codeBlockStyle: 'fenced',
-	bulletListMarker: '*',
-	strongDelimiter: '**',
-	hr: '---'
-});
+// Note: Do not perform DOM-dependent work (like Turndown) in the
+// background service worker. Conversion and clipboard operations
+// are delegated to the content script which has a DOM.
 
 // Track extraction state to prevent multiple simultaneous extractions
 let isExtracting = false;
@@ -53,14 +45,16 @@ async function handleBrowserAction(tab) {
 
 		console.log('Content extracted successfully, title:', extractedContent.title);
 
-		// Convert HTML to Markdown
-		console.log('Converting HTML to Markdown...');
-		const markdown = convertToMarkdown(extractedContent.content, extractedContent.title);
-		console.log('Markdown conversion complete, length:', markdown.length, 'characters');
+		// Ensure we have Markdown from the content script
+		if (!extractedContent.markdown) {
+			throw new Error('Failed to convert content to Markdown');
+		}
 
-		// Copy to clipboard
+		console.log('Markdown conversion complete, length:', extractedContent.markdown.length, 'characters');
+
+		// Copy to clipboard via the tab (content script context)
 		console.log('Copying to clipboard...');
-		await copyToClipboard(markdown);
+		await copyToClipboardInTab(tab.id, extractedContent.markdown);
 
 		// Show success feedback
 		showSuccessBadge('✓');
@@ -99,94 +93,30 @@ async function handleBrowserAction(tab) {
 }
 
 /**
- * Copy text to clipboard
- * @param {string} text - Text to copy to clipboard
- * @returns {Promise<void>}
+ * Ask the tab's content script to copy text to clipboard.
+ * @param {number} tabId
+ * @param {string} text
  */
-async function copyToClipboard(text) {
-	try {
-		// Try using the modern clipboard API first
-		if (navigator.clipboard && navigator.clipboard.writeText) {
-			console.log('Using modern clipboard API');
-			await navigator.clipboard.writeText(text);
-			console.log('Clipboard write successful');
-			return;
-		}
+async function copyToClipboardInTab(tabId, text) {
+	return new Promise((resolve, reject) => {
+		let timeout;
+		const listener = (message, sender) => {
+			if (sender.tab?.id === tabId && message.type === 'COPY_RESULT') {
+				chrome.runtime.onMessage.removeListener(listener);
+				clearTimeout(timeout);
+				if (message.success) resolve(); else reject(new Error(message.error || 'Clipboard copy failed'));
+			}
+		};
 
-		console.warn('Modern clipboard API not available, using fallback');
+		chrome.runtime.onMessage.addListener(listener);
 
-		// Fallback for browsers without clipboard API
-		// Create a temporary textarea element
-		const textarea = document.createElement('textarea');
-		textarea.value = text;
-		textarea.style.position = 'fixed';
-		textarea.style.opacity = '0';
-		document.body.appendChild(textarea);
+		chrome.tabs.sendMessage(tabId, { type: 'COPY_MARKDOWN', text });
 
-		// Select and copy the text
-		textarea.select();
-		textarea.setSelectionRange(0, 99999); // For mobile devices
-
-		const successful = document.execCommand('copy');
-		document.body.removeChild(textarea);
-
-		if (!successful) {
-			console.error('Fallback copy command failed');
-			throw new Error('Copy command failed');
-		}
-
-		console.log('Fallback clipboard write successful');
-
-	} catch (error) {
-		console.error('Clipboard operation failed:', error);
-
-		// Handle specific error cases
-		if (error.name === 'NotAllowedError') {
-			console.error('Clipboard access denied by user or browser policy');
-			throw new Error('Clipboard access denied. Please grant clipboard permissions.');
-		} else if (error.message.includes('not supported')) {
-			console.error('Clipboard API not supported in this browser');
-			throw new Error('Clipboard API not supported in this browser');
-		} else {
-			throw new Error('Failed to copy to clipboard');
-		}
-	}
-}
-
-/**
- * Convert HTML content to Markdown format
- * @param {string} html - HTML content to convert
- * @param {string|null} title - Article title
- * @returns {string} - Markdown formatted content
- */
-function convertToMarkdown(html, title) {
-	try {
-		if (!html) {
-			console.error('No HTML content provided for conversion');
-			throw new Error('No HTML content to convert');
-		}
-
-		console.log('Converting HTML to Markdown, HTML length:', html.length);
-
-		// Convert HTML to Markdown using Turndown
-		let markdown = turndownService.turndown(html);
-
-		// Add title as H1 if available and not already present
-		if (title && !markdown.startsWith('# ')) {
-			console.log('Adding title to Markdown:', title);
-			markdown = `# ${title}\n\n${markdown}`;
-		}
-
-		// Clean up excessive whitespace
-		markdown = markdown.replace(/\n{3,}/g, '\n\n');
-
-		console.log('Markdown conversion successful');
-		return markdown.trim();
-
-	} catch (error) {
-		console.error('Markdown conversion failed:', error);
-		throw new Error('Failed to convert content to Markdown');
-	}
+		timeout = setTimeout(() => {
+			chrome.runtime.onMessage.removeListener(listener);
+			reject(new Error('Clipboard operation timeout'));
+		}, 5000);
+	});
 }
 
 /**
@@ -231,6 +161,14 @@ async function injectContentScript(tabId) {
 			files: ['lib/readability-0.6.0.js']
 		});
 		console.log('Readability.js injected successfully');
+
+		// Inject Turndown.js library for Markdown conversion in the page context
+		console.log('Injecting Turndown.js library...');
+		await chrome.scripting.executeScript({
+			target: { tabId },
+			files: ['lib/turndown-7.2.1.js']
+		});
+		console.log('Turndown.js injected successfully');
 
 		// Then inject and execute the content script
 		console.log('Injecting content script...');

@@ -44,12 +44,43 @@
 			console.log('Gloriosa: Content length:', article.content.length, 'characters');
 			console.log('Gloriosa: Text length:', article.textContent.length, 'characters');
 
-			// Return successful extraction result
+
+			// Create Turndown service (library injected by background)
+			const turndownService = new TurndownService({
+				headingStyle: 'atx',
+				codeBlockStyle: 'fenced',
+				bulletListMarker: '*',
+				strongDelimiter: '**',
+				hr: '---'
+			});
+
+			// Convert to Markdown in the page context (DOM available)
+			let markdown = '';
+			try {
+				markdown = turndownService.turndown(article.content || '');
+				if (article.title && !markdown.startsWith('# ')) {
+					markdown = `# ${article.title}\n\n${markdown}`;
+				}
+				markdown = markdown.replace(/\n{3,}/g, '\n\n').trim();
+				console.log('Gloriosa: Markdown conversion successful, length:', markdown.length);
+			} catch (mdErr) {
+				console.error('Gloriosa: Markdown conversion failed:', mdErr);
+				return {
+					type: 'CONTENT_EXTRACTED',
+					success: false,
+					content: null,
+					title: null,
+					error: 'Failed to convert content to Markdown'
+				};
+			}
+
+			// Return successful extraction result with Markdown
 			return {
 				type: 'CONTENT_EXTRACTED',
 				success: true,
 				content: article.content,
 				title: article.title,
+				markdown,
 				error: null
 			};
 
@@ -82,6 +113,41 @@
 			title: null,
 			error: error.message || 'Unknown error occurred'
 		});
+	});
+
+	// Listen for clipboard copy requests from background
+	chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+		if (message && message.type === 'COPY_MARKDOWN') {
+			const text = String(message.text || '');
+			const respond = (ok, err) => {
+				chrome.runtime.sendMessage({ type: 'COPY_RESULT', success: ok, error: err || null });
+			};
+			(async () => {
+				try {
+					if (navigator.clipboard && navigator.clipboard.writeText) {
+						await navigator.clipboard.writeText(text);
+						respond(true);
+						return;
+					}
+					// Fallback using a temporary textarea
+					const textarea = document.createElement('textarea');
+					textarea.value = text;
+					textarea.style.position = 'fixed';
+					textarea.style.opacity = '0';
+					document.body.appendChild(textarea);
+					textarea.focus();
+					textarea.select();
+					textarea.setSelectionRange(0, text.length);
+					const ok = document.execCommand('copy');
+					document.body.removeChild(textarea);
+					if (!ok) throw new Error('Copy command failed');
+					respond(true);
+				} catch (e) {
+					respond(false, e && e.message ? e.message : 'Clipboard copy failed');
+				}
+			})();
+			return; // Keep listener; async response sent via separate message
+		}
 	});
 
 })();
