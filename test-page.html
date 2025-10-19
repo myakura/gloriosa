@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Test Article for Gloriosa Extension</title>
+</head>
+<body>
+	<header>
+		<nav>
+			<a href="#">Home</a>
+			<a href="#">About</a>
+			<a href="#">Contact</a>
+		</nav>
+	</header>
+
+	<aside class="sidebar">
+		<h3>Advertisement</h3>
+		<p>Buy our product!</p>
+	</aside>
+
+	<article>
+		<h1>Test Article: Understanding Browser Extensions</h1>
+
+		<p>This is a test article to verify the Gloriosa extension works correctly. The extension should extract this main content and convert it to Markdown format.</p>
+
+		<h2>Key Features</h2>
+
+		<p>The extension provides several important features:</p>
+
+		<ul>
+			<li>Content extraction using Readability.js</li>
+			<li>HTML to Markdown conversion using Turndown.js</li>
+			<li>Automatic clipboard copying</li>
+			<li>User feedback with badges</li>
+		</ul>
+
+		<h2>How It Works</h2>
+
+		<p>When you click the browser action button, the extension:</p>
+
+		<ol>
+			<li>Shows a loading indicator</li>
+			<li>Injects the content script into the active tab</li>
+			<li>Extracts the main content using Readability</li>
+			<li>Converts the HTML to Markdown</li>
+			<li>Copies the result to your clipboard</li>
+			<li>Shows a success or error badge</li>
+		</ol>
+
+		<h3>Code Example</h3>
+
+		<pre><code>function extractContent() {
+	const reader = new Readability(document);
+	return reader.parse();
+}</code></pre>
+
+		<p>This is a <strong>bold statement</strong> with <em>emphasis</em> and a <a href="https://example.com">link</a>.</p>
+
+		<blockquote>
+			<p>This is a quote that should be preserved in the Markdown output.</p>
+		</blockquote>
+	</article>
+
+	<footer>
+		<p>&copy; 2025 Test Page. All rights reserved.</p>
+	</footer>
+</body>
+</html>

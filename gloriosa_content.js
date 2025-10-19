@@ -4,24 +4,6 @@
 (function () {
 	'use strict';
 
-	// Listen for messages from the background script
-	chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-		if (message.type === 'EXTRACT_CONTENT') {
-			extractContent()
-				.then(result => sendResponse(result))
-				.catch(error => sendResponse({
-					type: 'CONTENT_EXTRACTED',
-					success: false,
-					content: null,
-					title: null,
-					error: error.message || 'Unknown error occurred'
-				}));
-
-			// Return true to indicate we'll send a response asynchronously
-			return true;
-		}
-	});
-
 	/**
 	 * Extracts the main content from the current page using Readability.js
 	 * @returns {Promise<Object>} Extraction result with content and metadata
@@ -68,5 +50,19 @@
 			};
 		}
 	}
+
+	// Execute extraction immediately when script is injected
+	// and send result back to background script
+	extractContent().then(result => {
+		chrome.runtime.sendMessage(result);
+	}).catch(error => {
+		chrome.runtime.sendMessage({
+			type: 'CONTENT_EXTRACTED',
+			success: false,
+			content: null,
+			title: null,
+			error: error.message || 'Unknown error occurred'
+		});
+	});
 
 })();

@@ -167,23 +167,12 @@ function convertToMarkdown(html, title) {
  */
 async function injectContentScript(tabId) {
 	try {
-		// First inject Readability.js library
-		await chrome.scripting.executeScript({
-			target: { tabId },
-			files: ['lib/readability-0.6.0.js']
-		});
-
-		// Then inject and execute the content script
-		const results = await chrome.scripting.executeScript({
-			target: { tabId },
-			files: ['gloriosa_content.js']
-		});
-
-		// Wait for the content script to send back the extracted content
-		return new Promise((resolve, reject) => {
-			const messageListener = (message, sender, sendResponse) => {
+		// Set up message listener BEFORE injecting the script to avoid race condition
+		const extractionPromise = new Promise((resolve, reject) => {
+			const messageListener = (message, sender) => {
 				if (sender.tab?.id === tabId && message.type === 'CONTENT_EXTRACTED') {
 					chrome.runtime.onMessage.removeListener(messageListener);
+					clearTimeout(timeoutId);
 					resolve({
 						success: message.success,
 						content: message.content,
@@ -196,22 +185,39 @@ async function injectContentScript(tabId) {
 			chrome.runtime.onMessage.addListener(messageListener);
 
 			// Set a timeout to handle cases where no response is received
-			setTimeout(() => {
+			const timeoutId = setTimeout(() => {
 				chrome.runtime.onMessage.removeListener(messageListener);
 				reject(new Error('Content extraction timeout'));
 			}, 10000); // 10 second timeout
 		});
 
+		// First inject Readability.js library
+		await chrome.scripting.executeScript({
+			target: { tabId },
+			files: ['lib/readability-0.6.0.js']
+		});
+
+		// Then inject and execute the content script
+		await chrome.scripting.executeScript({
+			target: { tabId },
+			files: ['gloriosa_content.js']
+		});
+
+		// Wait for the content script to send back the extracted content
+		return await extractionPromise;
+
 	} catch (error) {
 		console.error('Script injection failed:', error);
 
 		// Handle specific error cases
-		if (error.message.includes('Cannot access')) {
+		if (error.message.includes('Cannot access') || error.message.includes('Cannot access a chrome')) {
 			throw new Error('Cannot extract content from this page (restricted)');
 		} else if (error.message.includes('No tab with id')) {
 			throw new Error('Tab not found');
+		} else if (error.message.includes('timeout')) {
+			throw error; // Re-throw timeout errors as-is
 		} else {
-			throw new Error('Failed to inject content script');
+			throw new Error('Failed to inject content script: ' + error.message);
 		}
 	}
 }
