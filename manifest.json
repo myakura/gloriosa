@@ -1,0 +1,30 @@
+{
+	"manifest_version": 3,
+	"name": "Gloriosa",
+	"version": "0.0.1",
+	"description": "Get content in Markdown",
+	"icons": {
+		"48": "icons/icon_gray.png",
+		"96": "icons/icon_gray.png"
+	},
+	"background": {
+		"scripts": ["gloriosa_background.js"],
+		"service_worker": "gloriosa_background.js"
+	},
+	"action": {
+		"default_icon": "icons/icon_lightgray.png",
+		"default_title": "Get content in Markdown"
+	},
+	"commands": {
+		"get-content-in-markdown": {
+			"description": "Get content in Markdown"
+		}
+	},
+	"permissions": ["tabs", "tabGroups"],
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "{}",
+			"strict_min_version": "139.0"
+		}
+	}
+}
