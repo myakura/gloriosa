@@ -86,7 +86,7 @@
 	- Add console logging for debugging purposes
 	- _Requirements: 4.4, 5.5, 6.4, 7.4_
 
-- [ ] 6. Create README documentation
+- [x] 6. Create README documentation
 	- Document extension purpose and features
 	- Add installation instructions for Firefox
 	- Add usage instructions
