@@ -69,3 +69,33 @@ Verification steps
 - Reload the extension.
 - Click the toolbar icon on an article page.
 - Confirm success badge and that Markdown is on the clipboard.
+
+---
+
+Follow-up: Clipboard Robustness
+
+Summary
+
+- Make clipboard copying resilient when `navigator.clipboard.writeText` fails due to focus or activation requirements by attempting focus and falling back to a textarea + `execCommand('copy')` path.
+
+Why
+
+- Some pages and browser states cause `writeText` to throw (e.g., “Document is not focused”). Previously this surfaced as a hard failure, even though a traditional selection-based copy often succeeds in the page context.
+
+Changes
+
+- gloriosa_content.js
+  - In the `COPY_MARKDOWN` handler, try `window.focus()` if `document.hasFocus()` is false before calling `navigator.clipboard.writeText`.
+  - If `writeText` throws, fall back to creating a hidden, readonly `<textarea>`, select its value, and call `document.execCommand('copy')`.
+  - Report success/failure via `COPY_RESULT`; include a meaningful error only if both methods fail.
+
+Behavioral impact
+
+- Reduces clipboard failures on pages requiring focus or explicit activation.
+- Keeps background logic unchanged while improving reliability in the content context.
+
+Verification steps
+
+- Reload the extension.
+- Click the toolbar icon on an article page that previously failed with “Document is not focused”.
+- Expect the success badge and Markdown on the clipboard even if `writeText` fails.

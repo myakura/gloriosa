@@ -123,27 +123,45 @@
 				chrome.runtime.sendMessage({ type: 'COPY_RESULT', success: ok, error: err || null });
 			};
 			(async () => {
-				try {
-					if (navigator.clipboard && navigator.clipboard.writeText) {
+				let lastError = null;
+				// Attempt modern API first; if it fails, fall back without aborting
+				if (navigator.clipboard && navigator.clipboard.writeText) {
+					try {
+						// Some sites require focus; attempt to focus the window/document
+						if (!document.hasFocus()) {
+							try { window.focus(); } catch (_) {}
+						}
 						await navigator.clipboard.writeText(text);
 						respond(true);
 						return;
+					} catch (err) {
+						lastError = err;
+						console.warn('Gloriosa: navigator.clipboard.writeText failed, falling back:', err);
 					}
-					// Fallback using a temporary textarea
+				}
+
+				// Fallback using a temporary textarea
+				try {
+					if (!document.hasFocus()) {
+						try { window.focus(); } catch (_) {}
+					}
 					const textarea = document.createElement('textarea');
 					textarea.value = text;
+					textarea.setAttribute('readonly', '');
 					textarea.style.position = 'fixed';
+					textarea.style.left = '-9999px';
+					textarea.style.top = '0';
 					textarea.style.opacity = '0';
 					document.body.appendChild(textarea);
 					textarea.focus();
 					textarea.select();
-					textarea.setSelectionRange(0, text.length);
 					const ok = document.execCommand('copy');
 					document.body.removeChild(textarea);
 					if (!ok) throw new Error('Copy command failed');
 					respond(true);
-				} catch (e) {
-					respond(false, e && e.message ? e.message : 'Clipboard copy failed');
+				} catch (fallbackErr) {
+					const msg = (fallbackErr && fallbackErr.message) || (lastError && lastError.message) || 'Clipboard copy failed';
+					respond(false, msg);
 				}
 			})();
 			return; // Keep listener; async response sent via separate message
