@@ -54,7 +54,7 @@ async function handleBrowserAction(tab) {
 
 		// Copy to clipboard via the tab (content script context)
 		console.log('Copying to clipboard...');
-		await copyToClipboardViaExecuteScript(tab.id, extractedContent.markdown);
+		await copyText(tab.id, extractedContent.markdown);
 
 		// Show success feedback
 		showSuccessBadge('✓');
@@ -97,27 +97,18 @@ async function handleBrowserAction(tab) {
  * @param {number} tabId
  * @param {string} text
  */
-async function copyToClipboardViaExecuteScript(tabId, text) {
+async function copyText(tabId, text) {
 	try {
-		const [{ result }] = await chrome.scripting.executeScript({
+		return chrome.scripting.executeScript({
 			target: { tabId },
-			func: async (clipboardText) => {
-				try {
-					await navigator.clipboard.writeText(clipboardText);
-					return { ok: true };
-				} catch (e) {
-					return { ok: false, error: e && e.message ? e.message : String(e) };
-				}
+			func: async (text) => {
+				await navigator.clipboard.writeText(text);
 			},
-			args: [text]
+			args: [text],
 		});
-
-		if (!result || !result.ok) {
-			throw new Error(result && result.error ? result.error : 'Clipboard copy failed');
-		}
-	} catch (err) {
-		console.error('copyToClipboardViaExecuteScript failed:', err);
-		throw new Error('Failed to copy to clipboard');
+	}
+	catch (error) {
+		throw error;
 	}
 }
 
