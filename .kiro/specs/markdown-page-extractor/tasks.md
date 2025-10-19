@@ -31,15 +31,15 @@
 		- Format response according to ContentMessage interface
 		- _Requirements: 4.5_
 
-- [ ] 3. Implement background service worker
-	- [ ] 3.1 Create gloriosa_background.js with basic structure
+- [x] 3. Implement background service worker
+	- [x] 3.1 Create gloriosa_background.js with basic structure
 		- Create new `gloriosa_background.js` file
 		- Import Turndown.js library
 		- Set up browser action click listener
 		- Ensure file follows .editorconfig formatting (tab indentation, UTF-8, LF endings)
 		- _Requirements: 3.1, 3.2, 8.1, 8.2, 8.5, 8.6_
 	
-	- [ ] 3.2 Implement content script injection logic
+	- [x] 3.2 Implement content script injection logic
 		- Create function to inject gloriosa_content.js into active tab
 		- Include Readability.js library in the injection
 		- Use chrome.scripting.executeScript API for injection
@@ -47,7 +47,7 @@
 		- Implement loading state feedback during injection
 		- _Requirements: 2.3, 3.2, 3.4, 4.1_
 	
-	- [ ] 3.3 Implement Turndown.js HTML-to-Markdown conversion
+	- [x] 3.3 Implement Turndown.js HTML-to-Markdown conversion
 		- Initialize TurndownService with configuration options
 		- Configure headingStyle: 'atx', codeBlockStyle: 'fenced'
 		- Configure bulletListMarker: '*', strongDelimiter: '**', hr: '---'
@@ -55,14 +55,14 @@
 		- Handle conversion errors gracefully
 		- _Requirements: 2.1, 2.2, 5.1, 5.2, 5.3, 5.4, 5.5_
 	
-	- [ ] 3.4 Implement clipboard write functionality
+	- [x] 3.4 Implement clipboard write functionality
 		- Create function to write Markdown text to clipboard
 		- Use `navigator.clipboard.writeText` API
 		- Handle clipboard permission errors
 		- Implement fallback for browsers without clipboard API
 		- _Requirements: 6.1, 6.2, 6.4, 7.3_
 	
-	- [ ] 3.5 Implement user feedback mechanisms
+	- [x] 3.5 Implement user feedback mechanisms
 		- Create success notification/badge when content is copied
 		- Create error notification/badge for failures
 		- Implement loading indicator during extraction
