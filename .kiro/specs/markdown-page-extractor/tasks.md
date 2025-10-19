@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Fix manifest.json configuration
+- [x] 1. Fix manifest.json configuration
 	- Generate a valid UUID for Firefox extension (current value is empty "{}")
 	- Update `browser_specific_settings.gecko.id` field with UUID in curly braces format
 	- Update permissions to include `activeTab`, `scripting`, and `clipboardWrite`
