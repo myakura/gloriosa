@@ -43,9 +43,9 @@
 			console.log('Gloriosa: Article title:', article.title);
 			console.log('Gloriosa: Content length:', article.content.length, 'characters');
 			console.log('Gloriosa: Text length:', article.textContent.length, 'characters');
-			console.log('Gloriosa: Extracted HTML:');
-			console.dir(article.content);
-
+			console.group('Gloriosa: Extracted HTML:');
+			console.log(article.content);
+			console.groupEnd();
 
 			// Create Turndown service (library injected by background)
 			const turndownService = new TurndownService({
@@ -65,8 +65,9 @@
 				}
 				markdown = markdown.replace(/\n{3,}/g, '\n\n').trim();
 				console.log('Gloriosa: Markdown conversion successful, length:', markdown.length);
-				console.log('Gloriosa: Markdown output:');
-				console.dir(markdown);
+				console.group('Gloriosa: Markdown output:');
+				console.log(markdown);
+				console.groupEnd();
 			} catch (mdErr) {
 				console.error('Gloriosa: Markdown conversion failed:', mdErr);
 				return {
@@ -133,7 +134,7 @@
 					try {
 						// Some sites require focus; attempt to focus the window/document
 						if (!document.hasFocus()) {
-							try { window.focus(); } catch (_) {}
+							try { window.focus(); } catch (_) { }
 						}
 						await navigator.clipboard.writeText(text);
 						respond(true);
@@ -147,7 +148,7 @@
 				// Fallback using a temporary textarea
 				try {
 					if (!document.hasFocus()) {
-						try { window.focus(); } catch (_) {}
+						try { window.focus(); } catch (_) { }
 					}
 					const textarea = document.createElement('textarea');
 					textarea.value = text;
