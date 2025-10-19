@@ -43,6 +43,8 @@
 			console.log('Gloriosa: Article title:', article.title);
 			console.log('Gloriosa: Content length:', article.content.length, 'characters');
 			console.log('Gloriosa: Text length:', article.textContent.length, 'characters');
+			console.log('Gloriosa: Extracted HTML:');
+			console.dir(article.content);
 
 
 			// Create Turndown service (library injected by background)
@@ -63,6 +65,8 @@
 				}
 				markdown = markdown.replace(/\n{3,}/g, '\n\n').trim();
 				console.log('Gloriosa: Markdown conversion successful, length:', markdown.length);
+				console.log('Gloriosa: Markdown output:');
+				console.dir(markdown);
 			} catch (mdErr) {
 				console.error('Gloriosa: Markdown conversion failed:', mdErr);
 				return {
