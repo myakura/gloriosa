@@ -139,6 +139,7 @@ async function injectContentScript(tabId) {
 						success: message.success,
 						content: message.content,
 						title: message.title,
+						markdown: message.markdown,
 						error: message.error
 					});
 				}
