@@ -43,7 +43,7 @@
 			console.log('Gloriosa: Article title:', article.title);
 			console.log('Gloriosa: Content length:', article.content.length, 'characters');
 			console.log('Gloriosa: Text length:', article.textContent.length, 'characters');
-			console.group('Gloriosa: Extracted HTML:');
+			console.groupCollapsed('Gloriosa: Extracted HTML:');
 			console.log(article.content);
 			console.groupEnd();
 
@@ -65,7 +65,7 @@
 				}
 				markdown = markdown.replace(/\n{3,}/g, '\n\n').trim();
 				console.log('Gloriosa: Markdown conversion successful, length:', markdown.length);
-				console.group('Gloriosa: Markdown output:');
+				console.groupCollapsed('Gloriosa: Markdown output:');
 				console.log(markdown);
 				console.groupEnd();
 			} catch (mdErr) {
