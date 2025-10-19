@@ -98,4 +98,60 @@ Verification steps
 
 - Reload the extension.
 - Click the toolbar icon on an article page that previously failed with “Document is not focused”.
-- Expect the success badge and Markdown on the clipboard even if `writeText` fails.
+    - Expect the success badge and Markdown on the clipboard even if `writeText` fails.
+
+---
+
+Follow-up: Clipboard via ExecuteScript
+
+Summary
+
+- Perform clipboard copy by executing `navigator.clipboard.writeText` directly in the page context via `chrome.scripting.executeScript`, mirroring the working pattern from the Miqueliana extension.
+
+Why
+
+- Calling `writeText` from a content-script handler can still fail on some pages with “Document is not focused”. Executing the copy function via `scripting.executeScript` in direct response to the user’s action improves activation/focus semantics and reliability.
+
+Changes
+
+- gloriosa_background.js
+  - Replace message-based clipboard copy with `copyToClipboardViaExecuteScript(tabId, text)`.
+  - New helper uses `chrome.scripting.executeScript` and returns `{ ok, error }` from the page to the background, throwing if copy fails.
+
+Behavioral impact
+
+- More reliable clipboard writes on pages that previously rejected `writeText` due to focus/activation.
+- Keeps conversion in-page and background orchestration unchanged otherwise.
+
+Verification steps
+
+- Reload the extension.
+- Trigger on a page that previously failed with “Document is not focused”.
+- Expect success badge and Markdown on the clipboard.
+
+---
+
+Follow-up: Manifest Host Permissions
+
+Summary
+
+- Add host permissions so programmatic script execution and clipboard operations have the necessary origin access across sites.
+
+Why
+
+- The clipboard write is executed via `chrome.scripting.executeScript` in the page context. While `activeTab` often suffices after a user gesture, adding `host_permissions: ["<all_urls>"]` aligns with a known-good configuration (as used in the working reference extension) and improves reliability on sites with stricter permission checks.
+
+Changes
+
+- manifest.json
+  - Added `"host_permissions": ["<all_urls>"]`.
+
+Behavioral impact
+
+- Ensures the extension has origin access needed for dynamic script injection and clipboard write across domains.
+
+Verification steps
+
+- Reload the extension.
+- Visit a few different domains (news site, blog, docs) and click the toolbar icon.
+- Confirm Markdown lands on the clipboard without permission prompts or errors.

@@ -21,6 +21,7 @@
 		}
 	},
 	"permissions": ["activeTab", "scripting", "clipboardWrite"],
+	"host_permissions": ["<all_urls>"],
 	"browser_specific_settings": {
 		"gecko": {
 			"id": "{ee5b47ec-fc7c-4ff3-b136-6778dda99189}",

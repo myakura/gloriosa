@@ -54,7 +54,7 @@ async function handleBrowserAction(tab) {
 
 		// Copy to clipboard via the tab (content script context)
 		console.log('Copying to clipboard...');
-		await copyToClipboardInTab(tab.id, extractedContent.markdown);
+		await copyToClipboardViaExecuteScript(tab.id, extractedContent.markdown);
 
 		// Show success feedback
 		showSuccessBadge('✓');
@@ -97,26 +97,28 @@ async function handleBrowserAction(tab) {
  * @param {number} tabId
  * @param {string} text
  */
-async function copyToClipboardInTab(tabId, text) {
-	return new Promise((resolve, reject) => {
-		let timeout;
-		const listener = (message, sender) => {
-			if (sender.tab?.id === tabId && message.type === 'COPY_RESULT') {
-				chrome.runtime.onMessage.removeListener(listener);
-				clearTimeout(timeout);
-				if (message.success) resolve(); else reject(new Error(message.error || 'Clipboard copy failed'));
-			}
-		};
+async function copyToClipboardViaExecuteScript(tabId, text) {
+    try {
+        const [{ result }] = await chrome.scripting.executeScript({
+            target: { tabId },
+            func: async (clipboardText) => {
+                try {
+                    await navigator.clipboard.writeText(clipboardText);
+                    return { ok: true };
+                } catch (e) {
+                    return { ok: false, error: e && e.message ? e.message : String(e) };
+                }
+            },
+            args: [text]
+        });
 
-		chrome.runtime.onMessage.addListener(listener);
-
-		chrome.tabs.sendMessage(tabId, { type: 'COPY_MARKDOWN', text });
-
-		timeout = setTimeout(() => {
-			chrome.runtime.onMessage.removeListener(listener);
-			reject(new Error('Clipboard operation timeout'));
-		}, 5000);
-	});
+        if (!result || !result.ok) {
+            throw new Error(result && result.error ? result.error : 'Clipboard copy failed');
+        }
+    } catch (err) {
+        console.error('copyToClipboardViaExecuteScript failed:', err);
+        throw new Error('Failed to copy to clipboard');
+    }
 }
 
 /**
