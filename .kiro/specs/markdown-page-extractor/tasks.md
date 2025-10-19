@@ -9,14 +9,14 @@
 	- Ensure file follows .editorconfig formatting (tab indentation, LF line endings)
 	- _Requirements: 1.1, 1.2, 1.3, 1.4, 7.1, 7.2, 7.3, 8.1, 8.2, 8.3_
 
-- [ ] 2. Create content script for page content extraction
-	- [ ] 2.1 Create gloriosa_content.js file with proper formatting
+- [x] 2. Create content script for page content extraction
+	- [x] 2.1 Create gloriosa_content.js file with proper formatting
 		- Create new `gloriosa_content.js` file in project root
 		- Set up message listener for background script communication
 		- Ensure file follows .editorconfig formatting (tab indentation, UTF-8, LF endings, final newline)
 		- _Requirements: 4.1, 8.1, 8.2, 8.5, 8.6_
 	
-	- [ ] 2.2 Implement Readability.js integration in content script
+	- [x] 2.2 Implement Readability.js integration in content script
 		- Import and initialize Readability.js functionality
 		- Clone the document to avoid modifying the original page
 		- Create Readability instance with cloned document
@@ -24,7 +24,7 @@
 		- Handle cases where no content can be extracted
 		- _Requirements: 2.1, 2.2, 4.2, 4.3, 4.4, 4.5_
 	
-	- [ ] 2.3 Implement message passing to background script
+	- [x] 2.3 Implement message passing to background script
 		- Send extracted HTML content back to background script
 		- Include article title in the response
 		- Handle and communicate extraction errors
