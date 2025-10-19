@@ -98,7 +98,7 @@ Verification steps
 
 - Reload the extension.
 - Click the toolbar icon on an article page that previously failed with “Document is not focused”.
-    - Expect the success badge and Markdown on the clipboard even if `writeText` fails.
+  - Expect the success badge and Markdown on the clipboard even if `writeText` fails.
 
 ---
 
@@ -155,3 +155,71 @@ Verification steps
 - Reload the extension.
 - Visit a few different domains (news site, blog, docs) and click the toolbar icon.
 - Confirm Markdown lands on the clipboard without permission prompts or errors.
+
+---
+
+Follow-up: Offscreen Clipboard Fallback
+
+Summary
+
+- Add a robust clipboard pathway using an offscreen document when `navigator.clipboard` is unavailable in the service worker or fails.
+
+Why
+
+- MV3 service workers lack a DOM and often cannot access `navigator.clipboard`. The Offscreen API provides a dedicated, invisible document with DOM access to perform clipboard actions reliably.
+
+Changes
+
+- gloriosa_background.js
+
+  - Added `copyToClipboardSmart(text)` which tries `navigator.clipboard.writeText` in SW, falling back to `copyViaOffscreen(text)`.
+  - Implemented `copyViaOffscreen(text)` and `ensureOffscreenDocument(offscreenUrl)` using `chrome.offscreen.createDocument` and `chrome.runtime.getContexts` to detect existing offscreen documents, await result via `OFFSCREEN_COPY_RESULT`, and close the document afterward.
+  - Updated main flow to call `copyToClipboardSmart(markdown)`.
+
+- gloriosa_offscreen.html / gloriosa_offscreen.js
+
+  - New offscreen document with a hidden `<textarea>`.
+  - Script listens for `OFFSCREEN_COPY_TEXT`, attempts `navigator.clipboard.writeText`, falls back to textarea + `execCommand('copy')`, then posts `OFFSCREEN_COPY_RESULT` back.
+
+- manifest.json
+  - Added `"offscreen"` permission and included `gloriosa_offscreen.html` + `gloriosa_offscreen.js` in `web_accessible_resources`.
+  - Kept `clipboardWrite` and added `clipboardRead` for broader compatibility.
+
+Behavioral impact
+
+- Clipboard copying becomes reliable even when the service worker cannot access the Clipboard API.
+
+Verification steps
+
+- Reload the extension.
+- Trigger the action on various domains.
+- Expect the clipboard to be populated and no “Document is not focused” errors.
+
+---
+
+Follow-up: Clipboard Strategy Order
+
+Summary
+
+- Prefer the Offscreen API for clipboard writes and fall back to page-executed `navigator.clipboard.writeText` via `chrome.scripting.executeScript` when Offscreen is unavailable or fails.
+
+Why
+
+- Offscreen documents provide the most reliable environment for clipboard operations in MV3. When Offscreen cannot be used (API not present or site/OS limitations), executing the copy function in the page context remains a solid fallback.
+
+Changes
+
+- gloriosa_background.js
+  - Updated `copyToClipboardSmart(text, tabId)` to:
+    1) Try `copyViaOffscreen(text)` first.
+    2) On failure or if Offscreen is unavailable, call `copyText(tabId, text)` which uses `chrome.scripting.executeScript` + `navigator.clipboard.writeText`.
+  - Updated call site to pass `tab.id` into `copyToClipboardSmart`.
+
+Behavioral impact
+
+- Increases success rates across sites and environments by using the most robust path first, with a proven fallback.
+
+Verification steps
+
+- Reload the extension.
+- Test across multiple domains; expect clipboard success even if Offscreen is not usable.
