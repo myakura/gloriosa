@@ -20,20 +20,8 @@
 			"description": "Get content in Markdown"
 		}
 	},
-	"permissions": [
-		"activeTab",
-		"scripting",
-		"clipboardWrite",
-		"offscreen",
-		"clipboardRead"
-	],
+	"permissions": ["activeTab", "scripting", "clipboardWrite"],
 	"host_permissions": ["<all_urls>"],
-	"web_accessible_resources": [
-		{
-			"resources": ["gloriosa_offscreen.html", "gloriosa_offscreen.js"],
-			"matches": ["<all_urls>"]
-		}
-	],
 	"browser_specific_settings": {
 		"gecko": {
 			"id": "{ee5b47ec-fc7c-4ff3-b136-6778dda99189}",

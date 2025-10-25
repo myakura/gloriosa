@@ -52,10 +52,9 @@ async function handleBrowserAction(tab) {
 
 		console.log('Markdown conversion complete, length:', extractedContent.markdown.length, 'characters');
 
-		// Copy to clipboard using a robust pathway.
-		// Try navigator.clipboard in SW; if not available, fall back to Offscreen API.
+		// Copy to clipboard by injecting into the active tab context
 		console.log('Copying to clipboard...');
-		await copyToClipboardSmart(extractedContent.markdown, tab.id);
+		await copyText(extractedContent.markdown);
 
 		// Show success feedback
 		showSuccessBadge('✓');
@@ -94,14 +93,16 @@ async function handleBrowserAction(tab) {
 }
 
 /**
- * Ask the tab's content script to copy text to clipboard.
- * @param {number} tabId
- * @param {string} text
+ * Copies the given text to the clipboard by injecting into the active tab.
+ * Mirrors the provided snippet's behavior.
+ * @param {string} text - The text to copy to the clipboard
+ * @returns {Promise<chrome.scripting.InjectionResult[]>}
  */
-async function copyText(tabId, text) {
+async function copyText(text) {
 	try {
+		const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 		return chrome.scripting.executeScript({
-			target: { tabId },
+			target: { tabId: tab.id },
 			func: async (text) => {
 				await navigator.clipboard.writeText(text);
 			},
@@ -111,88 +112,6 @@ async function copyText(tabId, text) {
 	catch (error) {
 		throw error;
 	}
-}
-
-/**
- * Smart clipboard copy (service worker context):
- * - Try navigator.clipboard.writeText if available in SW
- * - Otherwise use an offscreen document to perform the copy
- * @param {string} text
- */
-async function copyToClipboardSmart(text, tabId) {
-	// Prefer Offscreen API if available
-	if (chrome.offscreen?.createDocument) {
-		try {
-			await copyViaOffscreen(text);
-			return;
-		} catch (e) {
-			console.warn('Offscreen clipboard copy failed; falling back to executeScript:', e);
-		}
-	} else {
-		console.debug('Offscreen API not available; using executeScript fallback');
-	}
-
-	// Fallback: execute in page context via scripting API
-	await copyText(tabId, text);
-}
-
-/**
- * Use an offscreen document to copy text to the clipboard.
- * Ensures the offscreen doc exists, sends text for copying, waits for
- * acknowledgement, and then attempts to close the offscreen document.
- * @param {string} text
- */
-async function copyViaOffscreen(text) {
-	const offscreenUrl = chrome.runtime.getURL('gloriosa_offscreen.html');
-
-	await ensureOffscreenDocument(offscreenUrl);
-
-	await new Promise((resolve, reject) => {
-		let timeoutId;
-		const onMessage = (msg) => {
-			if (msg && msg.type === 'OFFSCREEN_COPY_RESULT') {
-				chrome.runtime.onMessage.removeListener(onMessage);
-				clearTimeout(timeoutId);
-				if (msg.success) resolve(); else reject(new Error(msg.error || 'Offscreen copy failed'));
-			}
-		};
-		chrome.runtime.onMessage.addListener(onMessage);
-		chrome.runtime.sendMessage({ type: 'OFFSCREEN_COPY_TEXT', text });
-		timeoutId = setTimeout(() => {
-			chrome.runtime.onMessage.removeListener(onMessage);
-			reject(new Error('Offscreen copy timeout'));
-		}, 8000);
-	});
-
-	try {
-		await chrome.offscreen.closeDocument();
-	} catch (e) {
-		console.debug('Offscreen close ignored:', e?.message || e);
-	}
-}
-
-/**
- * Ensure offscreen document exists for clipboard operations.
- * @param {string} offscreenUrl
- */
-async function ensureOffscreenDocument(offscreenUrl) {
-	try {
-		if (chrome.runtime.getContexts) {
-			const contexts = await chrome.runtime.getContexts({
-				contextTypes: ['OFFSCREEN_DOCUMENT'],
-				documentUrls: [offscreenUrl]
-			});
-			if (Array.isArray(contexts) && contexts.length > 0) return;
-		}
-	} catch (e) {
-		console.debug('getContexts unavailable; creating offscreen unconditionally. Reason:', e?.message || e);
-	}
-
-	await chrome.offscreen.createDocument({
-		url: offscreenUrl,
-		reasons: ['CLIPBOARD'],
-		justification: 'Copying Markdown to clipboard'
-	});
 }
 
 /**
