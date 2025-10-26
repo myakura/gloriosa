@@ -1,15 +1,16 @@
 {
 	"manifest_version": 3,
 	"name": "Gloriosa",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Get content in Markdown",
 	"icons": {
 		"48": "icons/icon_gray.png",
 		"96": "icons/icon_gray.png"
 	},
 	"background": {
+		"service_worker": "gloriosa_background.js",
 		"scripts": ["gloriosa_background.js"],
-		"service_worker": "gloriosa_background.js"
+		"persistent": false
 	},
 	"action": {
 		"default_icon": "icons/icon_lightgray.png",

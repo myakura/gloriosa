@@ -10,7 +10,8 @@ chrome.action.onClicked.addListener(async (tab) => {
 	console.log('Browser action clicked for tab:', tab.id, tab.url);
 	try {
 		await handleBrowserAction(tab);
-	} catch (error) {
+	}
+	catch (error) {
 		console.error('Browser action failed:', error);
 		showErrorBadge('Error');
 	}
@@ -30,11 +31,9 @@ async function handleBrowserAction(tab) {
 	console.log('Starting content extraction for tab:', tab.id);
 	isExtracting = true;
 
-	// Show loading state
 	showLoadingBadge();
 
 	try {
-		// Inject content script and extract content
 		console.log('Injecting content script...');
 		const extractedContent = await injectContentScript(tab.id);
 
@@ -52,41 +51,42 @@ async function handleBrowserAction(tab) {
 
 		console.log('Markdown conversion complete, length:', extractedContent.markdown.length, 'characters');
 
-		// Copy to clipboard by injecting into the active tab context
 		console.log('Copying to clipboard...');
 		await copyText(extractedContent.markdown);
 
-		// Show success feedback
 		showSuccessBadge('✓');
 
 		console.log('Content successfully copied to clipboard');
-	} catch (error) {
+	}
+	catch (error) {
 		console.error('Content extraction failed:', error);
 
-		// Provide specific error feedback based on error type
 		if (error.message.includes('restricted')) {
 			console.error('Error type: Restricted page');
 			showErrorBadge('✗');
 			showNotification('Cannot extract content from this page (restricted)');
-		} else if (error.message.includes('No readable content')) {
+		}
+		else if (error.message.includes('No readable content')) {
 			console.error('Error type: No readable content');
 			showErrorBadge('✗');
 			showNotification('No readable content found on this page');
-		} else if (error.message.includes('clipboard')) {
+		}
+		else if (error.message.includes('clipboard')) {
 			console.error('Error type: Clipboard failure');
 			showErrorBadge('✗');
 			showNotification('Failed to copy to clipboard');
-		} else if (error.message.includes('timeout')) {
+		}
+		else if (error.message.includes('timeout')) {
 			console.error('Error type: Timeout');
 			showErrorBadge('✗');
 			showNotification('Content extraction timed out');
-		} else {
+		}
+		else {
 			console.error('Error type: Unknown');
 			showErrorBadge('✗');
 			showNotification('An error occurred. Please try again.');
 		}
 	} finally {
-		// Reset extraction state
 		isExtracting = false;
 		console.log('Extraction state reset');
 	}
@@ -150,7 +150,6 @@ async function injectContentScript(tabId) {
 			}, 10000); // 10 second timeout
 		});
 
-		// First inject Readability.js library
 		console.log('Injecting Readability.js library...');
 		await chrome.scripting.executeScript({
 			target: { tabId },
@@ -158,7 +157,6 @@ async function injectContentScript(tabId) {
 		});
 		console.log('Readability.js injected successfully');
 
-		// Inject Turndown.js library for Markdown conversion in the page context
 		console.log('Injecting Turndown.js library...');
 		await chrome.scripting.executeScript({
 			target: { tabId },
@@ -166,7 +164,6 @@ async function injectContentScript(tabId) {
 		});
 		console.log('Turndown.js injected successfully');
 
-		// Then inject and execute the content script
 		console.log('Injecting content script...');
 		await chrome.scripting.executeScript({
 			target: { tabId },
@@ -174,23 +171,25 @@ async function injectContentScript(tabId) {
 		});
 		console.log('Content script injected successfully');
 
-		// Wait for the content script to send back the extracted content
 		console.log('Waiting for extraction result...');
 		return await extractionPromise;
 
-	} catch (error) {
+	}
+	catch (error) {
 		console.error('Script injection failed:', error);
 
-		// Handle specific error cases
 		if (error.message.includes('Cannot access') || error.message.includes('Cannot access a chrome')) {
 			console.error('Attempted to inject into restricted page (chrome://, about:, etc.)');
 			throw new Error('Cannot extract content from this page (restricted)');
-		} else if (error.message.includes('No tab with id')) {
+		}
+		else if (error.message.includes('No tab with id')) {
 			console.error('Tab not found:', tabId);
 			throw new Error('Tab not found');
-		} else if (error.message.includes('timeout')) {
+		}
+		else if (error.message.includes('timeout')) {
 			throw error; // Re-throw timeout errors as-is
-		} else {
+		}
+		else {
 			throw new Error('Failed to inject content script: ' + error.message);
 		}
 	}
@@ -247,7 +246,8 @@ function showNotification(message, isError = false) {
 	// In a full implementation, you could use chrome.notifications API
 	if (isError) {
 		console.error('Extension notification:', message);
-	} else {
+	}
+	else {
 		console.log('Extension notification:', message);
 	}
 
