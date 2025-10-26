@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "Gloriosa",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"description": "Get content in Markdown",
 	"icons": {
 		"48": "icons/icon_gray.png",
