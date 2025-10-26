@@ -87,6 +87,9 @@ This project uses `.editorconfig` for consistent code formatting:
 
 ## License
 
+- Project license: Apache License 2.0 (see `LICENSE`)
+- Notices: see `NOTICE` and `THIRD_PARTY_NOTICES.txt`
+
 This project uses the following open-source libraries:
 
 - Readability.js: Apache License 2.0
