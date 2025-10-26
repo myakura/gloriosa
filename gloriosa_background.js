@@ -2,6 +2,32 @@
 // background service worker. Conversion and clipboard operations
 // are delegated to the content script which has a DOM.
 
+/**
+ * Detects if the system is in dark mode
+ * @returns {boolean} True if dark mode is enabled, false otherwise
+ */
+function isDarkMode() {
+	// Note: this works only on non-service-worker contexts since its dependance on `window.matchMedia`. This is intentional as there's not really cross-browser way to detect light/dark mode for icon updates.
+	if (typeof window !== 'undefined' && 'matchMedia' in window) {
+		return window.matchMedia('(prefers-color-scheme: dark)').matches;
+	}
+	return false;
+}
+
+/**
+ * Updates the extension icon based on dark mode and enables/disables the extension based on the number of selected tabs
+ * @todo switch to use `icon_variants` once it's widely supported
+ */
+async function updateIcon() {
+	const icon = isDarkMode() ? 'icons/icon_white.png' : 'icons/icon_black.png';
+	try {
+		await chrome.action.setIcon({ path: icon });
+	}
+	catch (error) {
+		console.log(error);
+	}
+}
+
 // Track extraction state to prevent multiple simultaneous extractions
 let isExtracting = false;
 
@@ -259,3 +285,16 @@ function showNotification(message, isError = false) {
 		chrome.action.setTitle({ title: 'Get content in Markdown' });
 	}, 5000);
 }
+
+
+/**
+ * Initializes the extension
+ */
+function initialize() {
+	// Note: top-level await is not supported in service workers so this has to be a promise chain
+	updateIcon().catch((error) => {
+		console.log('Error on initialization:', error);
+	});
+}
+
+initialize();
