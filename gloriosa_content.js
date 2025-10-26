@@ -8,9 +8,6 @@
 async function extractContent() {
 	try {
 		console.log('Gloriosa: Starting content extraction');
-		console.log('Gloriosa: Page URL:', window.location.href);
-		console.log('Gloriosa: Page title:', document.title);
-
 		console.log('Gloriosa: Creating Readability instance...');
 		const documentClone = document.cloneNode(true);
 		const reader = new Readability(documentClone);
@@ -19,7 +16,7 @@ async function extractContent() {
 		const article = reader.parse();
 
 		if (!article || !article.content) {
-			console.warn('Gloriosa: No readable content found');
+			console.log('Gloriosa: No readable content found');
 			console.log('Gloriosa: Article object:', article);
 			return {
 				type: 'CONTENT_EXTRACTED',

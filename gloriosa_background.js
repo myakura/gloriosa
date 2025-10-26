@@ -1,7 +1,3 @@
-// Note: Do not perform DOM-dependent work (like Turndown) in the
-// background service worker. Conversion and clipboard operations
-// are delegated to the content script which has a DOM.
-
 /**
  * Detects if the system is in dark mode
  * @returns {boolean} True if dark mode is enabled, false otherwise
@@ -238,7 +234,6 @@ function showErrorBadge(text = '✗') {
 		chrome.action.setBadgeText({ text: '' });
 	}, 3000);
 }
-
 
 /**
  * Initializes the extension
