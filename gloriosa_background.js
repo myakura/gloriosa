@@ -39,7 +39,7 @@ chrome.action.onClicked.addListener(async (tab) => {
 	}
 	catch (error) {
 		console.error('Browser action failed:', error);
-		showErrorBadge('Error');
+		showErrorBadge('✗');
 	}
 });
 
@@ -84,33 +84,25 @@ async function handleBrowserAction(tab) {
 	}
 	catch (error) {
 		console.error('Content extraction failed:', error);
+		showErrorBadge('✗');
 
 		if (error.message.includes('restricted')) {
 			console.error('Error type: Restricted page');
-			showErrorBadge('✗');
-			showNotification('Cannot extract content from this page (restricted)');
 		}
 		else if (error.message.includes('No readable content')) {
 			console.error('Error type: No readable content');
-			showErrorBadge('✗');
-			showNotification('No readable content found on this page');
 		}
 		else if (error.message.includes('clipboard')) {
 			console.error('Error type: Clipboard failure');
-			showErrorBadge('✗');
-			showNotification('Failed to copy to clipboard');
 		}
 		else if (error.message.includes('timeout')) {
 			console.error('Error type: Timeout');
-			showErrorBadge('✗');
-			showNotification('Content extraction timed out');
 		}
 		else {
 			console.error('Error type: Unknown');
-			showErrorBadge('✗');
-			showNotification('An error occurred. Please try again.');
 		}
-	} finally {
+	}
+	finally {
 		isExtracting = false;
 		console.log('Extraction state reset');
 	}
@@ -224,13 +216,11 @@ async function injectContentScript(tabId) {
  * @param {string} text - Badge text to display
  */
 function showSuccessBadge(text = '✓') {
-	console.log('Showing success badge');
 	chrome.action.setBadgeText({ text });
 	chrome.action.setBadgeBackgroundColor({ color: '#34a853' });
 
 	// Clear badge after 2 seconds
 	setTimeout(() => {
-		console.log('Clearing success badge');
 		chrome.action.setBadgeText({ text: '' });
 	}, 2000);
 }
@@ -240,39 +230,13 @@ function showSuccessBadge(text = '✓') {
  * @param {string} text - Badge text to display
  */
 function showErrorBadge(text = '✗') {
-	console.log('Showing error badge');
 	chrome.action.setBadgeText({ text });
 	chrome.action.setBadgeBackgroundColor({ color: '#ea4335' });
 
 	// Clear badge after 3 seconds
 	setTimeout(() => {
-		console.log('Clearing error badge');
 		chrome.action.setBadgeText({ text: '' });
 	}, 3000);
-}
-
-/**
- * Show notification to user
- * @param {string} message - Message to display
- * @param {boolean} isError - Whether this is an error notification
- */
-function showNotification(message, isError = false) {
-	// For now, we'll use console logging as notifications require additional permissions
-	// In a full implementation, you could use chrome.notifications API
-	if (isError) {
-		console.error('Extension notification:', message);
-	}
-	else {
-		console.log('Extension notification:', message);
-	}
-
-	// Alternative: Update the browser action title temporarily
-	chrome.action.setTitle({ title: message });
-
-	// Reset title after a few seconds
-	setTimeout(() => {
-		chrome.action.setTitle({ title: 'Get content in Markdown' });
-	}, 5000);
 }
 
 
