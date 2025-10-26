@@ -57,8 +57,6 @@ async function handleBrowserAction(tab) {
 	console.log('Starting content extraction for tab:', tab.id);
 	isExtracting = true;
 
-	showLoadingBadge();
-
 	try {
 		console.log('Injecting content script...');
 		const extractedContent = await injectContentScript(tab.id);
@@ -219,15 +217,6 @@ async function injectContentScript(tabId) {
 			throw new Error('Failed to inject content script: ' + error.message);
 		}
 	}
-}
-
-/**
- * Show loading indicator on browser action badge
- */
-function showLoadingBadge() {
-	console.log('Showing loading badge');
-	chrome.action.setBadgeText({ text: '...' });
-	chrome.action.setBadgeBackgroundColor({ color: '#4285f4' });
 }
 
 /**
